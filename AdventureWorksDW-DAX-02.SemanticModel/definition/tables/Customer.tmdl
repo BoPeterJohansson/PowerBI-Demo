@@ -1,0 +1,140 @@
+table Customer
+	lineageTag: c1a0ac8c-6704-4d55-968b-aaf7b0aa990e
+
+	column CustomerKey
+		dataType: int64
+		isHidden
+		isKey
+		formatString: 0
+		lineageTag: 3f6c173b-8eee-4c35-bf38-32b29b423a1b
+		summarizeBy: none
+		sourceColumn: CustomerKey
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Customer ID'
+		dataType: string
+		lineageTag: dacc6252-f1ed-4128-b652-7154c01027b2
+		summarizeBy: none
+		sourceColumn: Customer ID
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isText":true}
+
+	column Customer
+		dataType: string
+		lineageTag: 454fe5e9-a54f-4e84-98ea-af17d0ff93a3
+		isDefaultLabel
+		summarizeBy: none
+		sourceColumn: Customer
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isText":true}
+
+	column City
+		dataType: string
+		lineageTag: a7423950-76cf-45ae-afa9-354c8bb7166e
+		dataCategory: City
+		summarizeBy: none
+		sourceColumn: City
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isText":true}
+
+	column State-Province
+		dataType: string
+		lineageTag: 7b287976-1756-494d-8f4f-078fc6f46c87
+		dataCategory: StateOrProvince
+		summarizeBy: none
+		sourceColumn: State-Province
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isText":true}
+
+	column Country-Region
+		dataType: string
+		lineageTag: 0069b299-cb16-4f8f-b5c1-9a7bbc157b93
+		dataCategory: Country
+		summarizeBy: none
+		sourceColumn: Country-Region
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isText":true}
+
+	column 'Postal Code'
+		dataType: string
+		lineageTag: 36bb71d2-c602-4f58-9f69-98e30dc004e6
+		dataCategory: PostalCode
+		summarizeBy: none
+		sourceColumn: Postal Code
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isText":true}
+
+	column 'Date of Birth'
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: debf55d6-a939-40cb-8ef2-3f736e1b38b9
+		summarizeBy: none
+		sourceColumn: Date of Birth
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Age = DATEDIFF(Customer[Date of Birth], NOW(), YEAR)
+		formatString: 0
+		lineageTag: a011a74d-68a8-4b72-8eee-550f23bc6b4a
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	hierarchy Geography
+		lineageTag: fe006320-7ee5-471f-8700-3d2c0a9416fc
+
+		level Country-Region
+			lineageTag: ef50f38b-dbb3-46f4-9a52-b21dba8215a5
+			column: Country-Region
+
+		level State-Province
+			lineageTag: 7aead470-805c-42c2-a6a3-934fa4397b17
+			column: State-Province
+
+		level City
+			lineageTag: e340c570-7162-48f3-8785-152fa9619feb
+			column: City
+
+		level 'Postal Code'
+			lineageTag: ba21e83b-09eb-453f-bc37-d3cba526a72a
+			column: 'Postal Code'
+
+		level Customer
+			lineageTag: 982e94d6-5457-4976-acd4-39913047852e
+			column: Customer
+
+	partition Customer-01f41322-c19c-4b65-a4cb-85a8045da233 = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database(SqlServerInstance, SqlServerDatabase),
+				    dbo_DimCustomer = Source{[Schema="dbo",Item="DimCustomer"]}[Data],
+				    #"Removed Other Columns" = Table.SelectColumns(dbo_DimCustomer,{"CustomerKey", "CustomerAlternateKey", "FirstName", "LastName", "BirthDate", "DimGeography"}),
+				    #"Expanded DimGeography" = Table.ExpandRecordColumn(#"Removed Other Columns", "DimGeography", {"City", "StateProvinceName", "EnglishCountryRegionName", "PostalCode"}, {"City", "StateProvinceName", "EnglishCountryRegionName", "PostalCode"}),
+				    #"Merged Columns" = Table.CombineColumns(#"Expanded DimGeography",{"FirstName", "LastName"},Combiner.CombineTextByDelimiter(" ", QuoteStyle.None),"Customer"),
+				    #"Add NA Row" = Table.InsertRows(#"Merged Columns", 0, {[CustomerKey = -1, CustomerAlternateKey = "[Not Applicable]", Customer = "[Not Applicable]", BirthDate = null, City = "[Not Applicable]", StateProvinceName ="[Not Applicable]", EnglishCountryRegionName ="[Not Applicable]", PostalCode ="[Not Applicable]"]}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Add NA Row",{{"CustomerAlternateKey", "Customer ID"}, {"StateProvinceName", "State-Province"}, {"EnglishCountryRegionName", "Country-Region"}, {"PostalCode", "Postal Code"}, {"BirthDate", "Date of Birth"}})
+				in
+				    #"Renamed Columns"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

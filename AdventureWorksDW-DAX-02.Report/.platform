@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "AdventureWorksDW-DAX-02"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "dec47403-fbb5-421e-bbef-55d283649544"
+  }
+}
